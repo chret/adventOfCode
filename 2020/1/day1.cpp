@@ -36,7 +36,7 @@ void printContent(const std::vector<T>& vec)
     std::cout << std::endl;
 }
 
-int computeProductOfSoughtEntries(const std::vector<int>& vec, int expectedSum)
+int computeProductOfTwoSoughtEntries(const std::vector<int>& vec, int expectedSum)
 {
     for (int i = 0; i < vec.size() - 1; ++i)
     {
@@ -48,6 +48,25 @@ int computeProductOfSoughtEntries(const std::vector<int>& vec, int expectedSum)
             }
         }
     }
+    return -1;
+}
+
+int computeProductOfThreeSoughtEntries(const std::vector<int>& vec, int expectedSum)
+{
+    for (int i = 0; i < vec.size() - 2; ++i)
+    {
+        for (int j = i+1; j < vec.size()-1; ++j)
+        {
+            for (int k = j+1; k < vec.size(); ++k)
+            {
+                if(vec[i] + vec[j] + vec[k] == expectedSum)
+                {
+                    return vec[i] * vec[j] * vec[k];
+                }
+            }
+        }
+    }
+    return -1;
 }
 
 int main()
@@ -55,6 +74,12 @@ int main()
     auto fileContent = readFromFile("input.txt");
     //printContent(fileContent);
     int expectedSum = 2020;
-    int result = computeProductOfSoughtEntries(fileContent, expectedSum);
-    std::cout << "Result: " << result << std::endl;
+
+    // part 1
+    int result1 = computeProductOfTwoSoughtEntries(fileContent, expectedSum);
+    std::cout << "Part 1 result: " << result1 << std::endl;
+
+    // part 2
+    int result2 = computeProductOfThreeSoughtEntries(fileContent, expectedSum);
+    std::cout << "Part 2 result: " << result2 << std::endl;
 }
