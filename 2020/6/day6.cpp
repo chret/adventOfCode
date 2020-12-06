@@ -11,26 +11,24 @@ auto readFromFile(std::string fileName)
 {
     std::ifstream inputFile;
     inputFile.open(fileName);
-    std::vector<std::set<char>> content;
+    std::vector<std::vector<std::string>> content;
     if(inputFile.is_open())
     {
-        std::set<char> yesAnswers;
+        std::vector<std::string> yesAnswersOfGroup;
         std::string line;
         while(std::getline(inputFile,line))
         {
             if(line.empty())
             {
-                content.push_back(yesAnswers);
-                yesAnswers.clear();
+                content.push_back(yesAnswersOfGroup);
+                yesAnswersOfGroup.clear();
                 continue;
             }
-        
-            for(const auto& a: line)
-            {
-                yesAnswers.insert(a);
-            }
+
+            std::sort(line.begin(), line.end()); // sorting later required in union/intersection algorithms
+            yesAnswersOfGroup.push_back(line);
         }
-        if(!yesAnswers.empty()) content.push_back(yesAnswers);
+        if(!yesAnswersOfGroup.empty()) content.push_back(yesAnswersOfGroup);
         inputFile.close();
     }
     else
@@ -41,59 +39,51 @@ auto readFromFile(std::string fileName)
     return content;
 }
 
-auto readFromFile2(std::string fileName)
+int getSumOfAnwers(const std::vector<std::string>& answers)
 {
-    std::ifstream inputFile;
-    inputFile.open(fileName);
-    std::vector<std::set<char>> content;
-    if(inputFile.is_open())
+    int sumOfAnswers = 0;
+    for(const auto& group: answers)
     {
-        std::set<char> yesAnswers;
-        std::string line;
-        bool isFirstEntry = true;
-        while(std::getline(inputFile,line))
+        int numGroupAnswers = group.size();
+        sumOfAnswers += numGroupAnswers;
+    }
+    return sumOfAnswers;
+}
+
+std::vector<std::string> getUnionOfGroupAnswers(std::vector<std::vector<std::string>> & answers)
+{
+    std::vector<std::string> combinedAnswerOfGroups;
+    for( auto& group: answers)
+    {
+        std::string groupAnswer = "";
+        for(auto answer: group)
         {
-            if(line.empty())
-            {
-                content.push_back(yesAnswers);
-                yesAnswers.clear();
-                isFirstEntry = true;
-                continue;
-            }
-            if(isFirstEntry)
-            {
-                for(auto& a: line)
-                {
-                    yesAnswers.insert(a);
-                }
-                isFirstEntry = false;
-            } else 
-            {
-                std::set<char> yesAnswersPerson;
-                for(auto& a: line)
-                {
-                    yesAnswersPerson.insert(a);
-                }
-                // find common answers
-                std::set<char> commonYesAnswers;
-                std::set_intersection(yesAnswers.begin(), yesAnswers.end(),
-                                      yesAnswersPerson.begin(), yesAnswersPerson.end(), 
-                                      std::inserter(commonYesAnswers, commonYesAnswers.begin()));
-                //std::cout << yesAnswers.size() << " $ " << yesAnswersPerson.size() << " -> " << commonYesAnswers.size() << std::endl;
-                yesAnswers = commonYesAnswers;
-
-            }
-
+            std::string unionOfTwoAnswers = "";
+            std::set_union(answer.begin(), answer.end(), groupAnswer.begin(), groupAnswer.end(), 
+                           std::inserter(unionOfTwoAnswers,unionOfTwoAnswers.begin()));
+            groupAnswer = unionOfTwoAnswers;
         }
-        if(!yesAnswers.empty()) content.push_back(yesAnswers);
-        inputFile.close();
+        combinedAnswerOfGroups.push_back(groupAnswer);
     }
-    else
+    return combinedAnswerOfGroups;
+}
+
+std::vector<std::string> getIntersectionOfGroupAnswers(std::vector<std::vector<std::string>> & answers)
+{
+    std::vector<std::string> combinedAnswerOfGroups;
+    for( auto& group: answers)
     {
-        std::cout << "Could not open file "  <<  fileName << std::endl;
-        std::abort();
+        std::string groupAnswer = group[0];
+        for(auto answer: group)
+        {
+            std::string intersectionOfTwoAnswers = "";
+            std::set_intersection(answer.begin(), answer.end(), groupAnswer.begin(), groupAnswer.end(), 
+                                  std::inserter(intersectionOfTwoAnswers,intersectionOfTwoAnswers.begin()));
+            groupAnswer = intersectionOfTwoAnswers;
+        }
+        combinedAnswerOfGroups.push_back(groupAnswer);
     }
-    return content;
+    return combinedAnswerOfGroups;
 }
 
 template<typename T>
@@ -106,28 +96,16 @@ void printContent(const std::vector<T>& vec)
     std::cout << std::endl;
 }
 
-
 int main()
 {
-    auto fileContent1 = readFromFile("input.txt");
+    auto parsedFileContent = readFromFile("input.txt");
 
-    int sumOfAnswers = 0;
-    for(const auto& group: fileContent1)
-    {
-        int numGroupAnswers = group.size();
-        sumOfAnswers += numGroupAnswers;
-    }
+    auto result1 = getUnionOfGroupAnswers(parsedFileContent);
+    //printContent(result1);
+    std::cout << "Result 1: " << getSumOfAnwers(result1) << std::endl;
 
-    std::cout << "Result 1: " << sumOfAnswers << std::endl;
-
-    auto fileContent2 = readFromFile2("input.txt");
-    int sumOfAnswers2 = 0;
-    for(const auto& group: fileContent2)
-    {
-        int numGroupAnswers2 = group.size();
-        sumOfAnswers2 += numGroupAnswers2;
-    }
-
-    std::cout << "Result 2: " << sumOfAnswers2 << std::endl;
+    auto result2 = getIntersectionOfGroupAnswers(parsedFileContent);
+    //printContent(result2);
+    std::cout << "Result 2: " << getSumOfAnwers(result2) << std::endl;
 
 }
