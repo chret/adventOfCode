@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <numeric>
 
+using Rules_T = std::map<std::string, std::map<std::string,int> >;
 
 bool is_alnum(const std::string &str)
 {
@@ -30,7 +31,7 @@ auto extractRuleFromLine(std::string line)
     std::string containRuleStr = line.substr(found + delim.size());
     std::stringstream ss(containRuleStr);
     std::string token;
-    int amount;
+    int amount = -1;
     std::string bagType;
     while(getline(ss,token,' '))
     {
@@ -62,7 +63,7 @@ auto readFromFile(std::string fileName)
 {
     std::ifstream inputFile;
     inputFile.open(fileName);
-    std::map<std::string, std::map<std::string,int> > parsedData;
+    Rules_T parsedData;
     if(inputFile.is_open())
     {
         std::string line;
@@ -80,11 +81,33 @@ auto readFromFile(std::string fileName)
     return parsedData;
 }
 
-template<typename T>
-void printContent(const std::vector<T>& vec)
+void printContent(const Rules_T& rules)
 {
-    std::copy(vec.begin(), vec.end(), std::ostream_iterator<T>(std::cout, " "));
-    std::cout << std::endl;
+    std::cout << "=============\n";
+    for(const auto& rule: rules)
+    {
+        std::cout << rule.first << ": ";
+        for(const auto& elem: rule.second)
+        {
+            std::cout << elem.first << " (" << elem.second << "), ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << "=============\n";
+}
+
+long getNumberOfBags(std::string bag, const Rules_T & rules)
+{
+    auto mapOfContainedBags = rules.find(bag);
+    if(mapOfContainedBags->second.empty()) return 1;
+
+    long numberOfBags = 1;
+    for(const auto& bagsInside: mapOfContainedBags->second)
+    {
+        //std::cout << bag << " -> " << bagsInside.first << " " << bagsInside.second << std::endl;
+        numberOfBags += long(bagsInside.second) * getNumberOfBags(bagsInside.first, rules);
+    }
+    return numberOfBags;
 }
 
 
@@ -92,8 +115,9 @@ int main()
 {
     auto parsedFileContent = readFromFile("input.txt");
 
+    std::string myBag = "shiny gold";
     std::set<std::string> containingBags;
-    std::set<std::string> bagsToCheck = {"shiny gold"};
+    std::set<std::string> bagsToCheck = {myBag};
     std::set<std::string> newBagsToCheck;
     while(!bagsToCheck.empty())
     {
@@ -116,20 +140,15 @@ int main()
                 }
             }
         }
-        /*
-        std::cout << "Containing bags: ";
-        std::copy(containingBags.begin(), containingBags.end(), std::ostream_iterator<std::string>(std::cout, " "));
-        
-        std::cout << "new bags: ";
-        std::copy(newBagsToCheck.begin(), newBagsToCheck.end(), std::ostream_iterator<std::string>(std::cout, " "));
-        
-        std::cout << "bags: ";
-        std::copy(bagsToCheck.begin(), bagsToCheck.end(), std::ostream_iterator<std::string>(std::cout, " "));
-*/
         bagsToCheck = newBagsToCheck;
         newBagsToCheck.clear();
     }
 
     std::cout << "Result 1: " << containingBags.size() << std::endl;
+
+    //printContent(parsedFileContent);
+    int numberOfBags = getNumberOfBags(myBag, parsedFileContent) - 1; // -1: golden bag already there
+
+    std::cout << "Result 2: " << numberOfBags << std::endl;
 
 }
