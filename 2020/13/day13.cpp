@@ -98,12 +98,18 @@ long long solveTask2BruteForce(std::vector<INT>& busIds, std::vector<INT>& offse
 
 std::pair<INT,INT> getRepeatingCycleA(INT incA, INT incB, INT offsetA, INT offsetAB)
 {
+    // how often has A to be incremented, such that the condition "X * incA + offsetAB = Y * incB" is true for the first time
+    // -> will never be true before offsetA + X * incA
+    // -> new offset for future searches
     INT offsetCycleA = 0;
     while( (offsetCycleA * incA + offsetA + offsetAB) % incB != 0)
     {
         offsetCycleA++;
     }
 
+    // how often, after the offset, has A to be incremented such that the conditions is true again
+    // equivalent to: least common multiple of incA and offsetAB
+    // -> new cycle increment
     INT cycleA = 1;
     while( ( cycleA * incA * offsetAB ) % incB != 0)
     {
