@@ -108,7 +108,6 @@ std::pair<INT,INT> getRepeatingCycleA(INT incA, INT incB, INT offsetA, INT offse
     }
 
     // how often, after the offset, has A to be incremented such that the conditions is true again
-    // equivalent to: least common multiple of incA and offsetAB
     // -> new cycle increment
     INT cycleA = 1;
     while( ( cycleA * incA * offsetAB ) % incB != 0)
@@ -118,18 +117,18 @@ std::pair<INT,INT> getRepeatingCycleA(INT incA, INT incB, INT offsetA, INT offse
 
     auto newIncA = cycleA * incA;
     auto newOffsetA = offsetCycleA * incA + offsetA;
-    return {newOffsetA, newIncA};
+    return {newIncA, newOffsetA};
 }
 
 long long solveTask2(std::vector<INT>& busIds, std::vector<INT>& offsets)
 {
-    std::pair<INT,INT> curRes = {offsets[0],busIds[0]};
+    std::pair<INT,INT> curRes = {busIds[0], offsets[0]};
     for(int i= 1; i < busIds.size(); ++i)
     {
-        curRes = getRepeatingCycleA(curRes.second,busIds[i],curRes.first,offsets[i]);
+        curRes = getRepeatingCycleA(curRes.first,busIds[i],curRes.second,offsets[i]);
         //std::cout << curRes.first << " " << curRes.second << std::endl;
     }
-    return curRes.first;
+    return curRes.second;
 }
 
 int main()
