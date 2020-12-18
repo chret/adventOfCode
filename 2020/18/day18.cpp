@@ -79,17 +79,26 @@ auto readFromFile(std::string fileName)
     return parsedData;
 }
 
+void printExpression(const std::vector<std::string>& vec)
+{
+    for(const auto & e : vec)
+    {
+        std::cout << e << " ";
+    }
+    std::cout << std::endl;
+}
+
 template<typename T>
 void printContent(const std::vector<T>& vec)
 {
     std::cout << "=============\n";
     for(const auto & e : vec)
     {
-        for(const auto & i : e) std::cout << i << " ";
-        std::cout << std::endl;
+        printExpression(e);
     }
     std::cout << "=============\n";
 }
+
 
 bool is_digit(const std::string &str)
 {
@@ -98,15 +107,16 @@ bool is_digit(const std::string &str)
 
 INT doOperation(INT a, INT b, std::string op)
 {
+    //std::cout << a << op << b << std::endl;
     if(op.empty()) return b;
     if(op == "*") return a * b;
     if(op == "+") return a + b;
 }
 
-int findMatchingEndBracket(std::vector<std::string> & expr, int start)
+int findMatchingEndBracket(std::vector<std::string> & expr, int start, int end)
 {
     int numOpeningBrackets = 1;
-    for(int i = start + 1; i < expr.size(); ++i)
+    for(int i = start + 1; i < end; ++i)
     {
         if(expr[i] == ")") --numOpeningBrackets;
         else if(expr[i] == "(") ++numOpeningBrackets;
@@ -114,6 +124,16 @@ int findMatchingEndBracket(std::vector<std::string> & expr, int start)
         if(numOpeningBrackets == 0) return i;
     }
     return -1;
+}
+
+int findNextMultiplication(std::vector<std::string> & expr, int start, int end)
+{
+    for(int i = start + 1; i < end; ++i)
+    {
+        if(expr[i] == "*") return i;
+        else if(expr[i] == "(") i = findMatchingEndBracket(expr, i, end);
+    }
+    return end;
 }
 
 INT evaluateExpression(std::vector<std::string> & expr, int start, int end)
@@ -127,13 +147,49 @@ INT evaluateExpression(std::vector<std::string> & expr, int start, int end)
         else if(e == "*" || e == "+") op = e;
         else if(e == "(")
         {
-            auto j = findMatchingEndBracket(expr, i);
+            auto j = findMatchingEndBracket(expr, i, end);
             result = doOperation(result, evaluateExpression(expr, i+1, j), op);
             i = j;
         }
     }
     return result;
+}
 
+INT evaluateExpressionPart2(std::vector<std::string> & expr, int start, int end)
+{
+
+/*
+    for(int i = start; i < end; ++i)
+    {
+        std::cout << expr[i] << " ";
+    }
+    std::cout << std::endl;
+*/
+    INT result = 0;
+    std::string op = "";
+    for(int i = start; i < end; ++i)
+    {
+        auto e = expr[i];
+        //std::cout << i <<": " << e << std::endl; 
+        if(is_digit(e)) result = doOperation(result, std::stoll(e), op);
+        else if(e == "+") op = e;
+        else if(e == "*") 
+        {
+            op = e;
+            auto j = findNextMultiplication(expr, i, end);
+            result = doOperation(result, evaluateExpressionPart2(expr, i+1, j), op);
+            i = j-1;
+        }
+        else if(e == "(")
+        {
+            auto j = findMatchingEndBracket(expr, i, end);
+            result = doOperation(result, evaluateExpressionPart2(expr, i+1, j), op);
+            i = j;
+        }
+    }
+    //std::cout << " -> " << result << std::endl;
+
+    return result;
 }
 
 
@@ -149,10 +205,17 @@ int main()
         result[i] = evaluateExpression(expr,0,expr.size());
         //std::cout << result[i] << std::endl;
     }
+    std::cout << "Result 1: " << std::accumulate(result.begin(), result.end(),INT(0)) << std::endl;
 
-    auto result1 = std::accumulate(result.begin(), result.end(),INT(0));
-    std::cout << "Result 1: " << result1 << std::endl;
-
+    std::vector<INT> result2(parsedFileContent.size(),0);
+    for(int i = 0; i < result2.size(); ++i)
+    {
+        auto expr = parsedFileContent[i];
+        printExpression(expr);
+        result2[i] = evaluateExpressionPart2(expr,0,expr.size());
+        //std::cout << result2[i] << std::endl;
+    }
+    std::cout << "Result 2: " << std::accumulate(result2.begin(), result2.end(),INT(0)) << std::endl;
 
 
 }
