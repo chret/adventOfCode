@@ -339,7 +339,7 @@ auto buildPuzzle(std::map<int,Tile> & tiles, int tilesPerDirection)
     {
         fillColumn(tiles, tileArrangement, tilesPerDirection,x);
     }
-    std::copy (tileArrangement.begin(), tileArrangement.end(), std::ostream_iterator<int>(std::cout, ", "));
+    //std::copy (tileArrangement.begin(), tileArrangement.end(), std::ostream_iterator<int>(std::cout, ", "));
 
     return tileArrangement;
 }
@@ -381,7 +381,7 @@ bool isMonsterAtPosition(Tile & p, Monster & m, int x, int y)
         auto offsets = m.get(i);
         if(p(x+offsets.first,y+offsets.second) != '#') return false;
     }
-    std::cout << "Monster at: " << x << " " << y << std::endl;
+    //std::cout << "Monster at: " << x << " " << y << std::endl;
     return true;
 }
 
@@ -437,11 +437,10 @@ int main()
     std::string monsterString("                  # \n#    ##    ##    ###\n #  #  #  #  #  #   ");
     Monster seaMonster(monsterString);
     int monsterSize = seaMonster.num();
-    std::cout << seaMonster.xSize() << " " << seaMonster.ySize() << std::endl;
+    //std::cout << seaMonster.xSize() << " " << seaMonster.ySize() << std::endl;
 
     int numberOfMonsters = findMonsters(puzzle, seaMonster);
     std::cout << puzzle << std::endl;
     std::cout << "Number of monsters: " << numberOfMonsters << std::endl;
-
     std::cout << "Result 2: " << puzzle.numberOfChar('#') - numberOfMonsters * monsterSize << std::endl;
 }
