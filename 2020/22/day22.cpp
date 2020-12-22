@@ -234,11 +234,11 @@ int main()
     auto deck2R1 = deck2;
     bool isDeck2WinnerR1 = playGame(deck1R1, deck2R1);
     int result1 = getScore((isDeck2WinnerR1) ? deck2R1 : deck1R1); 
-    std::cout << "Result 1: " << result1 << std::endl;
+    std::cout << "Result 1: Player " << ((isDeck2WinnerR1) ? "2" : "1") << " wins with score " << result1 << std::endl;
 
     History_T history;
     WinHistory_T totalHistory;
     bool isDeck2WinnerR2 = playRecursiveGame(deck1, deck2, history, totalHistory);
     int result2 = getScore((isDeck2WinnerR2) ? deck2 : deck1); 
-    std::cout << "Result 2: " << result2 << std::endl;
+    std::cout << "Result 2: Player " << ((isDeck2WinnerR2) ? "2" : "1") << " wins with score " << result2 << std::endl;
 }
