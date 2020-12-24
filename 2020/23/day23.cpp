@@ -29,7 +29,7 @@ public:
     {
         cups_ = std::vector<int>(size);
         for(int i = 0; i < initStr.size(); ++i) cups_[i] = initStr[i] - 48;
-        minLabel_ = *std::min_element(cups_.begin(), cups_.end());
+        minLabel_ = *std::min_element(cups_.begin(), std::next(cups_.begin(), initStr.size()));
         for(int i = initStr.size(); i < size; ++i) cups_[i] = i+1;
         maxLabel_ = size-1;
     }
@@ -133,7 +133,9 @@ auto playGameTwo(std::string str, int rounds, int size)
     Cups cups(str,size);
     for(int i = 0; i < rounds; ++i)
     {
-        std::cout << "Move " << i+1 << ": " << cups << std::endl;
+        if(i%1000 == 0) std::cout << i+1 << std::endl;
+        //int cup1 = cups.getCupFromLabel(1);
+        //std::cout << i+1 << ": " << cups << "| " << cup1 << " | "  << cups(cup1+1) << ", " << cups(cup1+2) << std::endl;
         playRound(cups, cups.normalizeCup(i));
     }
     return cups.toResult2();
@@ -147,6 +149,7 @@ int main()
     int result1 = playGameOne(inputStr, 100); 
     std::cout << "Result 1: " << result1 << std::endl;
 
-    auto result2 = playGameTwo(testStr, 40, 20);
+    //auto result2 = playGameTwo(testStr, 200, 40);
+    auto result2 = playGameTwo(inputStr, 10000000, 1000000);
     std::cout << "Result 2: " << result2 << std::endl;
 }
