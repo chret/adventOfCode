@@ -1,9 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <unordered_set>
-#include <unordered_map>
-#include <deque>
+#include <list>
 #include <functional>
 
 #include <fstream>
@@ -11,145 +9,160 @@
 #include <algorithm>
 #include <numeric>
 #include <iterator>
-#include <array>
+#include <chrono>
 
-class Cups
+using Cups_T = std::list<int>;
+
+void print(Cups_T & cups)
 {
-public:
-    Cups(std::string initStr)
+    for(const auto & c : cups)
     {
-        cups_ = std::vector<int>(initStr.size());
-        for(int i = 0; i < initStr.size(); ++i) cups_[i] = initStr[i] - 48; //WTF c++..
-        auto minMax = std::minmax_element(cups_.begin(), cups_.end());
-        minLabel_ = *minMax.first;
-        maxLabel_ = *minMax.second;
+        std::cout << c << " ";
     }
-
-    Cups(std::string initStr, int size)
-    {
-        cups_ = std::vector<int>(size);
-        for(int i = 0; i < initStr.size(); ++i) cups_[i] = initStr[i] - 48;
-        minLabel_ = *std::min_element(cups_.begin(), std::next(cups_.begin(), initStr.size()));
-        for(int i = initStr.size(); i < size; ++i) cups_[i] = i+1;
-        maxLabel_ = size-1;
-    }
-
-    int operator()(int i) const {return cups_[this->normalizeCup(i)];}
-    int& operator()(int i) {return cups_[this->normalizeCup(i)];}
-    auto size() const {return cups_.size();}
-    bool isLabelContainedInRange(int label, int begin, int end)
-    {
-        for(int i = begin; i < end; ++i)
-        {
-            if(this->operator()(i) == label) return true;
-        }
-        return false;
-    }
-    int normalizeCup(int i) const 
-    {
-        return i%cups_.size();
-    }
-    int normalizeLabel(int l) const
-    {
-        if(l < minLabel_) return maxLabel_;
-        if(l > maxLabel_) return minLabel_;
-        return l;
-    }
-    int getCupFromLabel(int l) const
-    {
-        for(int i = 0; i < cups_.size(); ++i)
-        {
-            if(cups_[i] == l) return i;
-        }
-        return -1;
-    }
-    int getDistance(int i, int j) const
-    {
-        if(j >= i) return j-i;
-        else return j-i+cups_.size();
-    }
-    void moveCups(int srcBegin, int srcEnd, int dstBegin)
-    {
-        int numCupsToBeMoved = this->getDistance(srcBegin, srcEnd);
-        std::vector<int> cupsToBeMoved(numCupsToBeMoved);
-        for(int i = 0; i < numCupsToBeMoved; ++i) cupsToBeMoved[i] = this->operator()(i+srcBegin);
-        
-        int rangeDistance = this->getDistance(srcEnd, dstBegin);
-        for(int i = 0; i < rangeDistance; ++i) this->operator()(i+srcBegin) = this->operator()(i+srcEnd);
-
-        for(int i = 0; i < numCupsToBeMoved; ++i) this->operator()(i+srcBegin+rangeDistance) = cupsToBeMoved[i];
-    }
-
-    int toNumber() const{
-        int cup1 = this->getCupFromLabel(1);
-        std::stringstream ss;
-        for(int i= 0; i < cups_.size()-1;++i) ss << this->operator()(i+cup1+1);
-        return std::stoi(ss.str());
-    }
-
-    long long toResult2() const{
-        int cup1 = this->getCupFromLabel(1);
-        return static_cast<long long>(this->operator()(cup1+1)) * static_cast<long long>(this->operator()(cup1+2));
-    }
-
-private:
-    std::vector<int> cups_;
-    int minLabel_;
-    int maxLabel_;
-};
-
-std::ostream &operator<<(std::ostream &os, Cups const &c) { 
-    for(int i = 0; i < c.size(); ++i) os << c(i) << " ";
-    return os;
+    std::cout << std::endl;
 }
 
-void playRound(Cups & cups, int curCup)
+Cups_T createCupList(std::string initStr, int& minLabel, int& maxLabel, int& size)
 {
-    int curLabel = cups(curCup);
-    int destinationLabel = cups.normalizeLabel(curLabel - 1);
-    int numMoveCups = 3;
-    while(cups.isLabelContainedInRange(destinationLabel,curCup+1,curCup+1+numMoveCups))
-    {
-        destinationLabel = cups.normalizeLabel(--destinationLabel);
+    Cups_T cups;
+    minLabel = initStr.size();
+    maxLabel = 0;
+    for(int i = 0; i < initStr.size(); ++i)
+    {   
+        int label = initStr[i] - 48;
+        minLabel = std::min(minLabel, label);
+        maxLabel = std::max(maxLabel, label); 
+        cups.push_back(label);    
     }
-    int destinationCup = cups.getCupFromLabel(destinationLabel);
-    //std::cout << destinationCup << " " << destinationLabel << std::endl;
-    cups.moveCups(curCup+1,curCup+1+numMoveCups,destinationCup+1);
+    size = initStr.size();
+    return cups;
 }
 
-int playGameOne(std::string str, int rounds)
+void extendToSize(Cups_T & cups, int size, int& maxLabel)
 {
-    Cups cups(str);
+    for(int i = maxLabel+1; i <= size; ++i)
+    {   
+        cups.push_back(i);    
+    }
+    maxLabel = size;
+}
+
+int normalizeLabel(int label, int minLabel, int maxLabel) 
+{
+    if(label < minLabel) return maxLabel;
+    if(label > maxLabel) return minLabel;
+    return label;
+}
+
+using Clock = std::chrono::steady_clock;
+
+void playGame(Cups_T & cups, int size, int rounds, int minLabel, int maxLabel)
+{
+    double d1(0), d2(0), d3(0);
+
+    // additional data structure for speeding up finding position of a label
+    std::vector<Cups_T::iterator> iteratorStorage(size);
+    for(auto it = cups.begin(); it != cups.end(); ++it)
+    {
+        iteratorStorage[*it-1] = it;
+    }
+
     for(int i = 0; i < rounds; ++i)
     {
-        //std::cout << "Move " << i+1 << ": " << cups << std::endl;
-        playRound(cups, cups.normalizeCup(i));
+        auto t1 = Clock::now();
+
+        int curLabel = cups.front();
+        cups.pop_front();
+        cups.push_back(curLabel);
+        iteratorStorage[curLabel-1] = std::next(cups.end(),-1);
+        int destinationLabel = normalizeLabel(curLabel - 1, minLabel, maxLabel);
+
+        auto moveCups = Cups_T(cups.begin(), std::next(cups.begin(),3));
+        cups.erase(cups.begin(),std::next(cups.begin(),3));
+        for(auto it = moveCups.begin(); it != moveCups.end(); ++it)
+        {
+            iteratorStorage[*it-1] = it;
+        }
+
+        while(std::find(moveCups.begin(), moveCups.end(), destinationLabel) != moveCups.end())
+        {
+            destinationLabel = normalizeLabel(--destinationLabel, minLabel, maxLabel);
+        }
+
+        auto t2 = Clock::now();
+
+        //auto findIt = std::find(cups.begin(), cups.end(), destinationLabel);
+        auto findIt = iteratorStorage[destinationLabel-1]; 
+
+        auto t3 = Clock::now();
+
+        cups.splice(std::next(findIt,1),moveCups);
+
+        auto t4 = Clock::now();
+
+        std::chrono::duration<double> dur1 = t2-t1;
+        std::chrono::duration<double> dur2 = t3-t2;
+        std::chrono::duration<double> dur3 = t4-t3;
+
+        d1 += dur1.count();
+        d2 += dur2.count();
+        d3 += dur3.count();
     }
-    return cups.toNumber();
+    //std::cout << d1 << " " << d2 << " " << d3 << std::endl;
 }
 
-auto playGameTwo(std::string str, int rounds, int size)
+int getResult1(Cups_T & cups)
 {
-    Cups cups(str,size);
-    for(int i = 0; i < rounds; ++i)
+    auto findIt1 = std::find(cups.begin(), cups.end(), 1);
+    std::stringstream ss;
+    for(auto it = std::next(findIt1,1); it != cups.end(); ++it) ss << *it;
+    for(auto it = cups.begin(); it != findIt1; ++it) ss << *it;
+    return std::stoi(ss.str());
+}
+
+long long getResult2(Cups_T & cups)
+{
+    auto findIt1 = std::find(cups.begin(), cups.end(), 1);
+    int numbers = 2;
+    int num = 0;
+    long long result = 1;
+    for(auto it = std::next(findIt1,1); it != cups.end(); ++it)
     {
-        if(i%1000 == 0) std::cout << i+1 << std::endl;
-        //int cup1 = cups.getCupFromLabel(1);
-        //std::cout << i+1 << ": " << cups << "| " << cup1 << " | "  << cups(cup1+1) << ", " << cups(cup1+2) << std::endl;
-        playRound(cups, cups.normalizeCup(i));
+        if(num == numbers) break;
+        result *= *it;
+        ++num;
     }
-    return cups.toResult2();
+    for(auto it = cups.begin(); it != findIt1; ++it)
+    {
+        if(num == numbers) break;
+        result *= *it;
+        ++num;
+    }
+    return result;
 }
 
 int main()
 {
-    std::string testStr = "389125467";
-    std::string inputStr = "39564287";
+    //std::string inputStr = "389125467"; // test
+    std::string inputStr = "916438275";
 
-    int result1 = playGameOne(inputStr, 100); 
+    int rounds = 100;
+
+    int minLabel, maxLabel, size;
+    auto cups = createCupList(inputStr, minLabel, maxLabel, size);
+    playGame(cups, size, rounds, minLabel, maxLabel);
+    //print(cups);
+    int result1 = getResult1(cups); 
     std::cout << "Result 1: " << result1 << std::endl;
 
-    //auto result2 = playGameTwo(testStr, 200, 40);
-    auto result2 = playGameTwo(inputStr, 10000000, 1000000);
+    int rounds2 = 10000000;
+    int targetSize = 1000000;
+
+    int minLabel2, maxLabel2, size2;
+    auto cups2 = createCupList(inputStr, minLabel2, maxLabel2, size2);
+    extendToSize(cups2, targetSize, maxLabel2);
+    playGame(cups2, targetSize, rounds2, minLabel2, maxLabel2);
+    auto result2 = getResult2(cups2); 
     std::cout << "Result 2: " << result2 << std::endl;
+    
 }
