@@ -39,7 +39,7 @@ void printContent(const std::vector<T>& vec)
 
 int getNumberOfOnesAtPos(std::vector<std::string>& p, int pos)
 {
-    return std::count_if(p.begin(), p.end(), [pos](const std::string& s){s[pos] == '1';});
+    return std::count_if(p.begin(), p.end(), [pos](const std::string& s){return s[pos] == '1';});
 }
 
 std::pair<int,int> evaluateProtocol(std::vector<std::string>& protocol)
