@@ -164,7 +164,6 @@ int main()
     std::vector<Board_T> boards;
     readFromFile("input.txt", numbers, boards);
     printContent(numbers);
-    printBoard(boards[0]);
 
     // part 1
     auto result1 = playGame(boards, numbers, true);
